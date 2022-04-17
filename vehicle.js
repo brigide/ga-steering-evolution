@@ -4,8 +4,8 @@ class Vehicle {
         this.velocity = createVector(0, -2);
         this.position = createVector(x, y);
         this.r = 6;
-        this.maxspeed = 8;
-        this.maxforce = 0.2;
+        this.maxspeed = 5;
+        this.maxforce = 0.5;
     }
 
     // method to update location
@@ -21,6 +21,26 @@ class Vehicle {
 
     applyForce(force) {
         this.acceleration.add(force);
+    }
+
+    eat(list) {
+        let record = Infinity;
+        let closestIndex = -1;
+        for (let i = 0; i < list.length; i++) {
+            let distance = this.position.dist(list[i]);
+            if (distance < record) {
+                record = distance;
+                closestIndex = i;
+            }
+        }
+
+        // if vehicle rouched the list item
+        if (record < 5) {
+            list.splice(closestIndex, 1);
+        }
+        else if (closestIndex >= 0) {
+            this.seek(list[closestIndex]);
+        }
     }
 
     // method that calculates the steering force
