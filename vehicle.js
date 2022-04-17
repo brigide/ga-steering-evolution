@@ -1,5 +1,5 @@
 class Vehicle {
-    constructor(x, y) {
+    constructor(x, y, dna) {
         this.acceleration = createVector(0, 0);
         this.velocity = createVector(0, -2);
         this.position = createVector(x, y);
@@ -10,10 +10,35 @@ class Vehicle {
         this.health = 1;
 
         this.dna = [];
-        this.dna[0] = random(-2, 2); //food weight -> repealing or atracting
-        this.dna[1] = random(-2, 2); //poison weight
-        this.dna[2] = random(10, 100); //food perception -> in pixels
-        this.dna[3] = random(10, 100); //poison perception
+        if (dna === undefined) {
+            // Food weight
+            this.dna[0] = random(-2, 2);
+            // Poison weight
+            this.dna[1] = random(-2, 2);
+            // Food perception
+            this.dna[2] = random(0, 100);
+            // Poision Percepton
+            this.dna[3] = random(0, 100);
+        }
+        else {
+            // Mutation
+            this.dna[0] = dna[0];
+            if (random(1) < murationrate) {
+                this.dna[0] += random(-0.1, 0.1);
+            }
+                this.dna[1] = dna[1];
+            if (random(1) < murationrate) {
+                this.dna[1] += random(-0.1, 0.1);
+            }
+                this.dna[2] = dna[2];
+            if (random(1) < murationrate) {
+                this.dna[2] += random(-10, 10);
+            }
+                this.dna[3] = dna[3];
+            if (random(1) < murationrate) {
+                this.dna[3] += random(-10, 10);
+            }
+        }
     }
 
     // method to update location
@@ -34,8 +59,8 @@ class Vehicle {
     }
 
     behaviors(target, avoid) {
-        let steerTarget = this.eat(target, 0.2, this.dna[2]);
-        let steerAvoid = this.eat(avoid, -0.5, this.dna[3]);
+        let steerTarget = this.eat(target, 0.3, this.dna[2]);
+        let steerAvoid = this.eat(avoid, -0.75, this.dna[3]);
 
         steerTarget.mult(this.dna[0]);
         steerAvoid.mult(this.dna[1]);
@@ -44,25 +69,35 @@ class Vehicle {
         this.applyForce(steerAvoid);
     }
 
+    clone() {
+        if (random(1) < 0.002) {
+            return new Vehicle(this.position.x, this.position.y, this.dna);
+        }
+        return null;
+    }
+
     eat(list, nutrition, perception) {
         let record = Infinity;
-        let closestIndex = -1;
-        for (let i = 0; i < list.length; i++) {
+        let closest = null;
+        for (let i = list.length - 1; i >= 0; i--) {
             let distance = this.position.dist(list[i]);
-            if (distance < record && distance < perception) {
-                record = distance;
-                closestIndex = i;
+
+            if (distance < this.maxspeed) {
+                list.splice(i, 1);
+                this.health += nutrition;
+                //if (this.health > 1) { this.health = 1; }
+            }
+            else {
+                if (distance < record && distance < perception) {
+                    record = distance;
+                    closest = list[i];
+                }
             }
         }
 
         // if vehicle rouched the list item
-        if (record < 5) {
-            list.splice(closestIndex, 1);
-            this.health += nutrition;
-            //if (this.health > 1) { this.health = 1; }
-        }
-        else if (closestIndex >= 0) {
-            return this.seek(list[closestIndex]);
+        if (closest != null) {
+            return this.seek(closest);
         }
         return createVector(0, 0);
     }
